@@ -26,7 +26,8 @@ module Site =
                         [
                             formAttr
                                 [ attr.``method`` "post"
-                                  attr.action "/upload" ]
+                                  attr.action "/upload"
+                                  attr.enctype "multipart/form-data" ]
                                 [ inputAttr
                                     [ attr.name "Title"
                                       attr.``type`` "text" ]
