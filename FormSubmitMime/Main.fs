@@ -1,5 +1,7 @@
 namespace FormSubmitMime
 
+open System
+open System.IO
 open WebSharper
 open WebSharper.UI.Next
 open WebSharper.UI.Next.Html
@@ -11,6 +13,9 @@ type EndPoint =
 
 module Site =
     open WebSharper.UI.Next.Server
+    open MimeKit
+    open WebSharper.Web
+    open WebSharper.Sitelets.Http
 
     type MainTemplate = Templating.Template<"Main.html">
 
@@ -43,7 +48,30 @@ module Site =
                     )
                 )
             | Upload ->
-                Content.Text "test"
+                let load (c: ContentType) (b: Stream) = MimeEntity.Load(c, b)
+                
+                match ctx.Request.Headers |> Seq.tryFind (fun (header: Header) -> String.Equals(header.Name, "content-type", StringComparison.OrdinalIgnoreCase)) with
+                | Some header ->
+                    let contentType = ContentType.Parse (header.Value)
+                    match load contentType ctx.Request.Body with
+                    | :? MimeKit.Multipart as multipart -> 
+                        multipart
+                        |> Seq.map(fun part ->
+                            match part with
+                            | :? MimeKit.TextPart as m -> 
+                                m.ContentDisposition.Parameters.Item "name" + ": " + m.Text
+                            | :? MimeKit.MimePart as m -> 
+                                Directory.CreateDirectory "data" |> ignore
+                                use file = File.OpenWrite(Path.Combine("data", m.FileName))
+                                m.ContentObject.Stream.CopyTo(file)
+                                m.ContentDisposition.Parameters.Item "name" + ": " + m.FileName
+                            | _ -> "")
+                        |> String.concat ","
+                        |> Content.Text
+                    | _ ->
+                        Content.Text "test"
+                | _ ->
+                    Content.Text "test"
         )
 
 
