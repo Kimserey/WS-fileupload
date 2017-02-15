@@ -7,13 +7,40 @@ open WebSharper.UI.Next
 open WebSharper.UI.Next.Html
 open WebSharper.Sitelets
 
+module MultipartFormData =
+    open MimeKit
+    
+    type MultipartFormDataResult =
+        | Values of MimePartResult list
+        | MimePartNotSupported
+        
+    and MimePartResult =
+        | Text of fieldname:string * value:string
+        | File of fieldname:string * filename:string * Stream
+
+    let decode (contentType: string) (body: Stream) =
+        let load (c: ContentType) (b: Stream) = MimeEntity.Load(c, b)
+        let contentType = ContentType.Parse contentType
+
+        match load contentType body with
+        | :? MimeKit.Multipart as multipart -> 
+            multipart
+            |> Seq.choose(fun part ->
+                match part with
+                | :? MimeKit.TextPart as m -> Some <| MimePartResult.Text (m.ContentDisposition.Parameters.Item "name", m.Text)
+                | :? MimeKit.MimePart as m -> Some <| MimePartResult.File (m.ContentDisposition.Parameters.Item "name", m.FileName, m.ContentObject.Stream)
+                | _ -> None)
+            |> Seq.toList
+            |> Values
+
+        | _ -> MimePartNotSupported
+
 type EndPoint =
     | [<EndPoint "GET /">] Home
     | [<EndPoint "POST /upload">] Upload
 
 module Site =
     open WebSharper.UI.Next.Server
-    open MimeKit
     open WebSharper.Web
     open WebSharper.Sitelets.Http
 
@@ -34,7 +61,7 @@ module Site =
                                   attr.action "/upload"
                                   attr.enctype "multipart/form-data" ]
                                 [ inputAttr
-                                    [ attr.name "Title"
+                                    [ attr.id "Title"
                                       attr.``type`` "text" ]
                                     []
                                   inputAttr
@@ -48,30 +75,25 @@ module Site =
                     )
                 )
             | Upload ->
-                let load (c: ContentType) (b: Stream) = MimeEntity.Load(c, b)
-                
                 match ctx.Request.Headers |> Seq.tryFind (fun (header: Header) -> String.Equals(header.Name, "content-type", StringComparison.OrdinalIgnoreCase)) with
                 | Some header ->
-                    let contentType = ContentType.Parse (header.Value)
-                    match load contentType ctx.Request.Body with
-                    | :? MimeKit.Multipart as multipart -> 
-                        multipart
-                        |> Seq.map(fun part ->
-                            match part with
-                            | :? MimeKit.TextPart as m -> 
-                                m.ContentDisposition.Parameters.Item "name" + ": " + m.Text
-                            | :? MimeKit.MimePart as m -> 
-                                Directory.CreateDirectory "data" |> ignore
-                                use file = File.OpenWrite(Path.Combine("data", m.FileName))
-                                m.ContentObject.Stream.CopyTo(file)
-                                m.ContentDisposition.Parameters.Item "name" + ": " + m.FileName
-                            | _ -> "")
-                        |> String.concat ","
+                    match MultipartFormData.decode header.Value ctx.Request.Body with
+                    | MultipartFormData.Values values ->
+                        values
+                        |> List.map (
+                            function
+                            | MultipartFormData.Text (name, value) -> name + " " + value
+                            | MultipartFormData.File (name, filename, stream) -> 
+                                use file = File.OpenWrite(Path.Combine("data", filename))
+                                stream.CopyTo(file)
+                                name + " " + filename
+                        )
+                        |> String.concat ", "
                         |> Content.Text
-                    | _ ->
-                        Content.Text "test"
-                | _ ->
-                    Content.Text "test"
+
+                    | MultipartFormData.MimePartNotSupported ->
+                        Content.MethodNotAllowed
+                | _ -> Content.NotFound
         )
 
 
