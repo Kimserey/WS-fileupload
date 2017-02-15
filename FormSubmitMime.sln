@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FormSubmitMime", "FormSubmitMime\FormSubmitMime.fsproj", "{BDD0D17A-7C02-4C62-9A8F-2FA5D563D452}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Example", "Example\Example.fsproj", "{84F6DEB9-F502-4DD7-90A7-0F528B821F99}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{BDD0D17A-7C02-4C62-9A8F-2FA5D563D452}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BDD0D17A-7C02-4C62-9A8F-2FA5D563D452}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BDD0D17A-7C02-4C62-9A8F-2FA5D563D452}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84F6DEB9-F502-4DD7-90A7-0F528B821F99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84F6DEB9-F502-4DD7-90A7-0F528B821F99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84F6DEB9-F502-4DD7-90A7-0F528B821F99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84F6DEB9-F502-4DD7-90A7-0F528B821F99}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

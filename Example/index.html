@@ -1,0 +1,68 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" />
+</head>
+<body>
+    <div>
+        <form method="post" action="/upload" enctype="multipart/form-data">
+            <input name="my-data" type="text" />
+            <input type="file" name="some-file" />
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+    <div>
+        <form id="form1">
+            <input name="data-1" type="text" />
+            <input name="data-2" type="text" />
+            <button id="ajaxForm">Submit</button>
+        </form>
+    </div>
+    <div>
+        <form id="form2">
+            <input name="data-1" type="text" />
+            <input name="data-2" type="text" />
+            <input type="file" name="some-file" />
+            <button id="ajaxFormFormData">Submit</button>
+        </form>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script>
+        (function () {
+            $("#ajaxForm").click(function (e) {
+                e.preventDefault();
+                var json = JSON.stringify($("#form1").serializeArray());
+                $.ajax({
+                    type: "post",
+                    url: "/upload",
+                    data: json,
+                    contentType: "application/json",
+                    success: function () { }
+                });
+            });
+
+            $("#ajaxFormFormData").click(function (e) {
+                e.preventDefault();
+
+                var form = $("#form2");
+                var fd = new FormData();
+                $.each(form.serializeArray(), function (index, val) {
+                    fd.append(val.name, val.value)
+                });
+                fd.append('file', form.children('input[type=file]')[0].files[0]);
+
+                $.ajax({
+                    type: "post",
+                    url: "/upload",
+                    data: fd,
+                    contentType: false,
+                    processData: false,
+                    success: function () { }
+                });
+            });
+        })()
+    </script>
+</body>
+</html>
